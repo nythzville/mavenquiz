@@ -31,7 +31,7 @@ function maven_quiz(){
 		choice_2 text NOT NULL,
 		choice_3 text NOT NULL,
 		choice_4 text NOT NULL,
-		answer int NOT NULL,
+		answer text NOT NULL,
 		UNIQUE KEY id (id)
 	) $charset_collate;";
 
@@ -176,9 +176,39 @@ function validate_answers(){
 		return json_encode(array('error' => true, 'msg' => 'invalid security code!' ));
 	}else{
 
-		$request_obj = (object) $_REQUEST;
-		echo $request_obj;
-		// return json_encode($_REQUEST);
+		global $wpdb;
+
+		// Get the corrent answer in database
+		$sql = "SELECT id,answer FROM {$wpdb->prefix}quiz_questions";
+		$answers_key = $wpdb->get_results($sql);
+
+		$ans_list = $_REQUEST['answer_data']['answer_data'];
+		
+		$items = array();
+		foreach ($ans_list as $answer) {
+			$id = $answer["id"];
+			$id = intval(str_replace('mq-', '', $id));
+			$item = (object) array( 'id' => $id, 'answer' => $answer["ans"] );
+			array_push($items, $item);
+		}
+
+		/** Compare given items to answer key and get score**/
+		$score = 0;
+		foreach ($answers_key as $correct_ans) {
+			
+			foreach ($items as $q_item) {
+				
+				if($q_item->id == $correct_ans->id){
+					if ($q_item->answer === $correct_ans->answer) {
+						
+						$score++;
+					}
+					break;
+				}
+			}
+		}
+
+		echo json_encode(array('error'=> false, 'score' => $score));
 	}
 	exit();
 }
@@ -221,12 +251,16 @@ function quiz_display($atts){
     	<div id="wizard" class="form_wizard wizard_horizontal">
         	
            	<div id="step-1">
+           	<h2 class="StepTitle">
+           	</h2>
            	<?php
     		// List all Question
-    		// $q_count = 0;
-    		// $page = 0;
+    		$q_count 	= 0;
+    		$page 		= 0;
+    		$new_page 	= false;
+    		
             foreach ($question_list as $question) {
-            	// $q_count++;
+            	$q_count++;
 
       //       	if (($q_count % 10) == 0) {
       //       		$page++;
@@ -234,29 +268,40 @@ function quiz_display($atts){
       //       	}if
            	?>
 	            <div id="mq-<?php echo $question['id']; ?>" class="form-group q-row">
-	                <p class="col-md-12 col-sm-12 col-xs-12"><?php echo $question['question']; ?></p>
-	                
+		            <?php
+		            $question_display = $question['question'];
+		            $question_display = str_replace('<blank>', '<span class="answer">__</span>', $question_display);
+	            	?>
 	                <div class="col-md-12 col-sm-12 col-xs-12">
-		                <div class="radio col-md-3 col-sm-6 col-xs-12">
+		                <p class="question"><?php echo $question_display; ?></p>
+	                </div>
+	                <div class="col-md-12 col-sm-12 col-xs-12">
+		                <ul class="choice_list">
+		                	<li class="choice"><?php echo $question['choice_1']; ?></li>
+		                	<li class="choice"><?php echo $question['choice_2']; ?></li>
+		                	<li class="choice"><?php echo $question['choice_3']; ?></li>
+		                	<li class="choice"><?php echo $question['choice_4']; ?></li>
+		                </ul>
+		                <!-- <div class="radio col-md-3 col-sm-6 col-xs-12">
 	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="1"> a)	<?php echo $question['choice_1']; ?>
+	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="1"><?php echo $question['choice_1']; ?>
 	                        </label>
 	                    </div>
 		                <div class="radio col-md-3 col-sm-6 col-xs-12">
 	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="2"> b)	<?php echo $question['choice_2']; ?> 
+	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="2"><?php echo $question['choice_2']; ?> 
 	                        </label>
 	                    </div>
 		                <div class="radio col-md-3 col-sm-6 col-xs-12">
 	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="3"> c)	<?php echo $question['choice_3']; ?>
+	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="3"><?php echo $question['choice_3']; ?>
 	                        </label>
 	                    </div>
 		                <div class="radio col-md-3 col-sm-6 col-xs-12">
 	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="4"> d)	<?php echo $question['choice_4']; ?>
+	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="4"><?php echo $question['choice_4']; ?>
 	                        </label>
-	                    </div>
+	                    </div> -->
 	                </div>
 	            </div>
 	            <?php 

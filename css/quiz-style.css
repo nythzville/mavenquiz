@@ -9,3 +9,11 @@ ul.anchor{
 .modal-title{
 	font-size: 18px
 }
+
+/* Choice List */
+li.choice{
+	cursor: pointer;
+}
+span.answer{
+	color: #EF8821;
+}
