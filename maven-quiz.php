@@ -38,6 +38,13 @@ function maven_quiz(){
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql );
 
+	// $wpdb->query("INSERT INTO ".$wpdb->prefix . "quiz_questions
+ //            (`id`, `question`, `choice_1`, `choice_2`, `choice_3`, `choice_4`, `answer`)
+ //            VALUES
+ //            (1, 'Tom <blank> English', 'are', 'am', 'is', 'be', 'is'),
+ //            (2, '<blank> there a restaurant near hear?', 'Are', 'Have', 'Do', 'Is', 'Is'),
+ //            (3, 'I didn't <blank> TV last night,  'not watched', 'watch', 'watching', 'watched', 'watched')");
+
 
 	/*
 	*	List table for listing Questions 
@@ -53,11 +60,14 @@ function maven_quiz(){
 	<div class="wrap">
 		<?php if(isset($saved_quiz)){ ?>
 		<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+		<?php }elseif (isset($deleted_quiz)) { ?>
+			<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
 		<?php } ?>
 		<h2 class="wp-heading-inline">Quiztion List</h2>
 		<!-- <a href="#" class="page-title-action">Add Question</a> -->
-		<button type="button" class="btn btn-info btn-lg page-title-action" data-toggle="modal" data-target="#newQuestion">New Question</button>
-		
+		<button type="button" class="btn btn-info btn-lg page-title-action" data-toggle="modal" data-target="#newQuestion">New Question</button>	
+		<!-- <button id="btn-new-question" type="button" class="btn btn-info btn-lg page-title-action">New Question</button>	 -->
+
 			<form id="question-list" method="post">
 			<?php
 			
@@ -66,62 +76,66 @@ function maven_quiz(){
 			$customers->display();
 
 			?>
-	
 			<br class="clear">
 		</div>
 	</div>
 
+
 	<!-- Modal -->
 	<div id="newQuestion" class="modal fade" role="dialog">
-	  <div class="modal-dialog">
+		<div class="modal-dialog">
 
-	    <!-- Modal content-->
-	    <div class="modal-content">
-	       	<form id="frm-saved-quiz" method="post">
-	    		
+		    <!-- Modal content -->
+		    <div class="modal-content">
+		    		
 	      		<div class="modal-header">
 	        		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	        		<h4 class="modal-title">New Question</h4>
 	      		</div>
-	      		<div class="modal-body">
-		        	<div class="form-group">
-				    	<label for="email">Question: </label>
-				    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required=""></textarea>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="email">Choice 1: </label>
-				    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required=""></textarea>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="email">Choice 2: </label>
-				    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required=""></textarea>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="email">Choice 3: </label>
-				    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required=""></textarea>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="email">Choice 4: </label>
-				    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required=""></textarea>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="email">Answer: </label>
-				    	<select name="answer" class="form-control" required="">
-				    		<option value="1">1</option>
-				    		<option value="2">2</option>
-				    		<option value="3">3</option>
-				    		<option value="4">4</option>
-				    	</select>
-				  	</div>
-				  	<?php wp_nonce_field( 'save_mave_quiz', 'save_mave_quiz' ); ?>
-	        		
-				    </div>
-			      	<div class="modal-footer">
-			        	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			        	<button type="button" class="btn btn-success" onclick="forms[0].submit();">Save</button>
+			    <form id="frm-saved-quiz" method="post">
 
-	      			</div>
-	      		</form>	
+	      		<div class="modal-body">
+
+			        	<div class="form-group">
+					    	<label for="question">Question: </label>
+					    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required=""></textarea>
+					  	</div>
+					  	<div class="form-group">
+					    	<label for="choice_1">Choice 1: </label>
+					    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required=""></textarea>
+					  	</div>
+					  	<div class="form-group">
+					    	<label for="choice_2">Choice 2: </label>
+					    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required=""></textarea>
+					  	</div>
+					  	<div class="form-group">
+					    	<label for="choice_3">Choice 3: </label>
+					    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required=""></textarea>
+					  	</div>
+					  	<div class="form-group">
+					    	<label for="choice_4">Choice 4: </label>
+					    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required=""></textarea>
+					  	</div>
+					  	<div class="form-group">
+					    	<label for="answer">Answer: </label>
+					    	<textarea name="answer" class="form-control" id="answer" required=""></textarea>
+
+					  	</div>
+					  	<?php wp_nonce_field( 'save_mave_quiz', 'save_mave_quiz' ); ?>
+		  
+			    </div>
+
+		      	<div class="modal-footer">
+		        	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		        	<button type="button" class="btn btn-success" onclick="jQuery('#frm-saved-quiz').submit();">Save</button>
+
+      			</div>
+      			</form>
+      			<script type="text/javascript">
+      				jQuery(document).ready(function($){
+
+      				});
+      			</script>
 	    	</div>
 
 		</div>
@@ -194,21 +208,28 @@ function validate_answers(){
 
 		/** Compare given items to answer key and get score**/
 		$score = 0;
+		$mistakes = array();
 		foreach ($answers_key as $correct_ans) {
 			
 			foreach ($items as $q_item) {
 				
 				if($q_item->id == $correct_ans->id){
-					if ($q_item->answer === $correct_ans->answer) {
+					$answer = str_replace('\\', '', $q_item->answer);
+
+					if ($answer === $correct_ans->answer) {
 						
 						$score++;
+					}else{
+						$q = (object) array('id' => $q_item->id, 'your-answer' => $answers, 'correct' => $correct_ans->answer);
+						array_push($mistakes, $q);
 					}
+
 					break;
 				}
 			}
 		}
 
-		echo json_encode(array('error'=> false, 'score' => $score));
+		echo json_encode(array('error'=> false, 'score' => $score, 'mistakes' => $mistakes));
 	}
 	exit();
 }
@@ -222,7 +243,11 @@ function quiz_display($atts){
 
 	global $wpdb;
 	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style( 'font-awesome-min-css', plugins_url( '/maven-quiz/font-awesome/css/font-awesome.min.css' ));
+
 	wp_enqueue_script( 'wizard-form', plugins_url( '/maven-quiz/js/wizard/jquery.smartWizard.js' ));
+	wp_enqueue_script( 'bootbox-min-js', plugins_url( '/maven-quiz/js/bootbox.min.js' ));
+
 	wp_enqueue_script( 'quiz-js', plugins_url( '/maven-quiz/js/quiz.js' ));
 
 	// Ajax saving Scripts
@@ -239,41 +264,71 @@ function quiz_display($atts){
     ), $atts, 'bartag' );
 
 	/* Get all questions on database */
-	$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions";
+	$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions ORDER BY RAND()";
 	$question_list = $wpdb->get_results( $sql, 'ARRAY_A' );
 	$rows = $question_list->num_rows;
 	
 	?>
 	<!-- Smart Wizard -->
-    <p>This is a sample quiz from Maven Quiz plugin</p>
+	<h1>Test Your skills in English</h1>
+    <p>Test your English. This is a quick English test.
+	</p>
     <form class="form-horizontal">
-    
+    	<!-- Wizard starts -->
     	<div id="wizard" class="form_wizard wizard_horizontal">
-        	
-           	<div id="step-1">
-           	<h2 class="StepTitle">
-           	</h2>
+        	<ul class="wizard_steps">
+    		<?php
+	    		$pages_no = (count($question_list) / 5);
+	    		if( count($question_list)!= 0 ){
+	    			$pages_no++;
+	    		}
+
+	    		for ($i= 1; $i <= $pages_no ; $i++) { 
+	    		
+	    		?>
+	            <li>
+	                <a href="#step-<?php echo $i; ?>">
+	                    <span class="step_no"><?php echo $i; ?></span>
+	                    <span class="step_descr">
+			            
+			            <small>Page <?php echo $i; ?></small>
+				        </span>
+	                </a>
+	            </li>
+	            <?php } ?>
+	            
+	        </ul>
            	<?php
     		// List all Question
     		$q_count 	= 0;
     		$page 		= 0;
     		$new_page 	= false;
-    		
-            foreach ($question_list as $question) {
-            	$q_count++;
 
-      //       	if (($q_count % 10) == 0) {
-      //       		$page++;
-      //       		echo '<div id="step-'.$page.'">';
-      //       	}if
-           	?>
+            foreach ($question_list as $question) {
+            	
+            	if (($q_count == 0) || (($q_count >= 5) && ($q_count % 5) == 0)) { // if count has modulo every 5 counts
+            		$new_page = true; // adding page will be true
+            	}
+
+            	$q_count++;	// adding questions counts
+
+            	if ($new_page == true) {
+            		$page++;
+
+            		if ($q_count != 1) {
+            			echo '</div>';
+            		}
+            		echo '<div id="step-'.$page.'">';
+            		$new_page = false;
+            	}
+	           	?>
 	            <div id="mq-<?php echo $question['id']; ?>" class="form-group q-row">
 		            <?php
 		            $question_display = $question['question'];
 		            $question_display = str_replace('<blank>', '<span class="answer">__</span>', $question_display);
 	            	?>
 	                <div class="col-md-12 col-sm-12 col-xs-12">
-		                <p class="question"><?php echo $question_display; ?></p>
+		                <p class="question"><?php echo $q_count; ?>. <?php echo $question_display; ?></p>
 	                </div>
 	                <div class="col-md-12 col-sm-12 col-xs-12">
 		                <ul class="choice_list">
@@ -282,69 +337,17 @@ function quiz_display($atts){
 		                	<li class="choice"><?php echo $question['choice_3']; ?></li>
 		                	<li class="choice"><?php echo $question['choice_4']; ?></li>
 		                </ul>
-		                <!-- <div class="radio col-md-3 col-sm-6 col-xs-12">
-	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="1"><?php echo $question['choice_1']; ?>
-	                        </label>
-	                    </div>
-		                <div class="radio col-md-3 col-sm-6 col-xs-12">
-	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="2"><?php echo $question['choice_2']; ?> 
-	                        </label>
-	                    </div>
-		                <div class="radio col-md-3 col-sm-6 col-xs-12">
-	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="3"><?php echo $question['choice_3']; ?>
-	                        </label>
-	                    </div>
-		                <div class="radio col-md-3 col-sm-6 col-xs-12">
-	                        <label>
-	                            <input type="radio" class="mq" name="mq_<?php echo $question['id']; ?>" value="4"><?php echo $question['choice_4']; ?>
-	                        </label>
-	                    </div> -->
 	                </div>
 	            </div>
 	            <?php 
-	            // if ((($q_count + 1) % 10) == 0) {
-            	// 	echo '<div>';
-            	// }
-            }
-            	?>    
-            
+	            if ( count($question_list) == ($q_count - 1)) {
+            		echo '</div>';
+            	}
+	        }
+         ?>    
+		            
 
-        </div>
-        
-        <div id="step-2">
-            <h2 class="StepTitle">Step 2 Content</h2>
-            <p>
-                do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-        </div>
-        <div id="step-3">
-            <h2 class="StepTitle">Step 3 Content</h2>
-            <p>
-                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-        </div>
-        <div id="step-4">
-            <h2 class="StepTitle">Step 4 Content</h2>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-        </div>
-
-    </div>
+	    </div>
     </form>    
     <!-- End SmartWizard Content -->
 	<?php

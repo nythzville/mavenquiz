@@ -6,8 +6,14 @@ jQuery(document).ready(function ($) {
     	enableAllSteps: false,
     	enableFinishButton: true,
     	onFinish: function(){
-			
-    		var answer_data = get_your_answer();    		
+            
+            // 
+    		var answer_data = get_your_answer();
+            
+            if (answer_data == false) {
+                return false;
+            }  		
+
     		var request_data = {
 
     			answer_data: answer_data,
@@ -15,30 +21,40 @@ jQuery(document).ready(function ($) {
     			security: Quiz.security
     		}
 
-    		// var data = "action=validate_answers";
-    		// data += "&security=" + Quiz.security;
-    		// data += "&answer_data=" + Quiz.security;
-
-    		// console.log('request_data', request_data.serialize());
-    		// $.ajax(
-    		// 	{	type: 'POST',
-    		// 		url: Quiz.ajaxurl,
-    		// 		dataType: 'json',
-    		// 		data: data,
-    		// 		success: function(response){
-    		// 			//
-    		// 			console.log(response);
-    		// 		}
-    		// 	}
-    		// );
+            bootbox.dialog({ closeButton: true, message: '<div class="text-center quiz-notif"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });           
+            console.log(answer_data);
+            // Sending ajax post request to server
     		$.post(Quiz.ajaxurl, request_data)
     		.done(function(response){
-    			console.log(response);
+
+                var json_resp = JSON.parse(response);
+    			console.log(json_resp);
+                if (json_resp.error == false) {
+                    
+                    var notif_content = '<div class="m-quiz-notif"><i class="fa fa-check-square-o" aria-hidden="true"></i><p>Your Score is: ' + json_resp.score + '</p></div>';
+                    $('.quiz-notif').html(notif_content);
+
+                }
+
     		})
     		.fail(function(response){
     			console.log(response);
     		});
-    	}
+    	},
+        onLeaveStep: function(me, step, context){
+            
+            // if (step.fromStep < step.toStep) {
+            //     var cur_step = step.fromStep;
+            //     console.log('current step', step.fromStep);
+            //     var q_nums = $('#step-' + cur_step +' .q-row .choice_list').length;
+            //     var sel_nums = $('#step-' + cur_step +' .q-row .choice_list li.selected').length;
+            //     if( q_nums != sel_nums){
+            //         return false;
+            //     }    
+            // }
+            
+            return step.toStep;
+        }
 
     });
 
@@ -62,6 +78,13 @@ jQuery(document).ready(function ($) {
 function get_your_answer(){
 	var data = {};
 	var answer_data = [];
+
+    // if number of questions are not equal to number of answer
+    if ($('.q-row').length != $('li.selected').length ) {
+        alert("You've miss to answer some questions!");
+        return false;
+    }
+
 	$('.q-row').each(function(){
 		var qid = $(this).attr('id');
 		var ans = $(this).find('li.selected').html();

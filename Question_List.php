@@ -24,6 +24,7 @@ class Question_List extends WP_List_Table {
 	function prepare_items() {
 
 		// $items = $this->get_questions();
+		  $this->process_bulk_action();
 	  	$columns = $this->get_columns();
 	  	// $this->process_bulk_action();
 	 //  	$current_page = $this->get_pagenum();
@@ -42,7 +43,6 @@ class Question_List extends WP_List_Table {
 		$this->_column_headers = $this->get_column_info();
 
 		  /** Process bulk action */
-		  $this->process_bulk_action();
 
 		  $per_page     = $this->get_items_per_page( 'customers_per_page', 5 );
 		  $current_page = $this->get_pagenum();
@@ -122,7 +122,7 @@ class Question_List extends WP_List_Table {
 
 	function column_cb($item) {
         return sprintf(
-            '<input type="checkbox" name="menu[]" value="%s" />', $item['ID']
+            '<input type="checkbox" name="questions[]" value="%s" />', $item['id']
         );    
     }
 	
@@ -130,40 +130,50 @@ class Question_List extends WP_List_Table {
 	// Bulk Action
 	public function process_bulk_action() {
 
-	  //Detect when a bulk action is being triggered...
-	  if ( 'delete' === $this->current_action() ) {
+	  	//Detect when a bulk action is being triggered...
+	  	if ( 'delete' === $this->current_action() ) {
 
-	    // In our file that handles the request, verify the nonce.
-	    $nonce = esc_attr( $_REQUEST['_wpnonce'] );
+		    // In our file that handles the request, verify the nonce.
+		    $nonce  = filter_input( INPUT_POST, '_wpnonce', FILTER_SANITIZE_STRING );
+	        $action = 'bulk-' . $this->_args['plural'];
 
-	    if ( ! wp_verify_nonce( $nonce, 'sp_delete_customer' ) ) {
-	      die( 'Go get a life script kiddies' );
-	    }
-	    else {
-	      self::delete_customer( absint( $_GET['customer'] ) );
+		    if ( ! wp_verify_nonce(  $nonce, $action ) ) {
+		      die( 'Go get a life script kiddies' );
+		    }
+		    else {
 
-	      wp_redirect( esc_url( add_query_arg() ) );
-	      exit;
-	    }
+		    	$action = $this->current_action();
 
-	  }
+			    switch ( $action ) {
 
-	  // If the delete bulk action is triggered
-	  if ( ( isset( $_POST['action'] ) && $_POST['action'] == 'bulk-delete' )
-	       || ( isset( $_POST['action2'] ) && $_POST['action2'] == 'bulk-delete' )
-	  ) {
+			        case 'delete':
+			        	// If the delete bulk action is triggered
+					  	
+				    	$delete_ids = esc_sql( $_POST['questions'] );
+					    // loop over the array of record IDs and delete them
+					    foreach ( $delete_ids as $id ) {
+					      	self::delete_question( $id );
+					    }
+				  		
+				  		$messages['deleted_quiz'][2] = 'Quiz successfully deleted!';		    
+			            break;
 
-	    $delete_ids = esc_sql( $_POST['bulk-delete'] );
+			        case 'save':
+			            wp_die( 'Save something' );
+			            break;
 
-	    // loop over the array of record IDs and delete them
-	    foreach ( $delete_ids as $id ) {
-	      self::delete_customer( $id );
+			        default:
+			            // do nothing or something else
+			            return;
+			            break;
+			    }
 
-	    }
+		    return $messages;
+		    }
 
-	    wp_redirect( esc_url( add_query_arg() ) );
-	    exit;
-	  }
+		}
+
+	  	
 	}
 
 	/**
@@ -177,6 +187,18 @@ class Question_List extends WP_List_Table {
 	  $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions";
 
 	  return $wpdb->get_var( $sql );
+	}
+
+	/*
+	*	Question management
+	*/
+	public static function delete_question($id){
+		global $wpdb;
+
+		$sql = "DELETE FROM {$wpdb->prefix}quiz_questions WHERE id = " .$id. "";
+
+		return $wpdb->get_results( $sql );
+
 	}
 
 	// Convert object to array
