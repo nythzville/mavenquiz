@@ -32,6 +32,8 @@ function maven_quiz(){
 		choice_3 text NOT NULL,
 		choice_4 text NOT NULL,
 		answer text NOT NULL,
+		level text NOT NULL,
+
 		UNIQUE KEY id (id)
 	) $charset_collate;";
 
@@ -278,25 +280,37 @@ function quiz_display($atts){
     	<div id="wizard" class="form_wizard wizard_horizontal">
         	<ul class="wizard_steps">
     		<?php
-	    		$pages_no = (count($question_list) / 5);
-	    		if( count($question_list)!= 0 ){
+
+    			// Get number of pages 
+	    		$pages_no = (count($question_list) / 10);
+
+	    		// if number of items has a remainder then add 1 page
+	    		if( (count($question_list) % 10)!= 0 ){
 	    			$pages_no++;
 	    		}
 
+	    		// Add page indicator links
 	    		for ($i= 1; $i <= $pages_no ; $i++) { 
-	    		
 	    		?>
 	            <li>
 	                <a href="#step-<?php echo $i; ?>">
 	                    <span class="step_no"><?php echo $i; ?></span>
 	                    <span class="step_descr">
-			            
 			            <small>Page <?php echo $i; ?></small>
 				        </span>
 	                </a>
 	            </li>
 	            <?php } ?>
-	            
+	            <!-- / Final Step -->
+	            <li>
+	                <a href="#step-<?php echo (intval($pages_no) + 1); ?>">
+	                    <span class="step_no"><i class="fa fa-check"></i></span>
+	                    <span class="step_descr">
+			            <small>Final Step</small>
+				        </span>
+	                </a>
+	            </li>
+	            <!-- / Final Step -->
 	        </ul>
            	<?php
     		// List all Question
@@ -306,7 +320,7 @@ function quiz_display($atts){
 
             foreach ($question_list as $question) {
             	
-            	if (($q_count == 0) || (($q_count >= 5) && ($q_count % 5) == 0)) { // if count has modulo every 5 counts
+            	if (($q_count == 0) || (($q_count >= 10) && ($q_count % 10) == 0)) { // if count has modulo every 5 counts
             		$new_page = true; // adding page will be true
             	}
 
@@ -340,13 +354,42 @@ function quiz_display($atts){
 	                </div>
 	            </div>
 	            <?php 
-	            if ( count($question_list) == ($q_count - 1)) {
+	            if ( count($question_list) == $q_count) {
             		echo '</div>';
             	}
 	        }
-         ?>    
-		            
+         	?>    
+		    <div id="step-<?php echo (intval($pages_no) + 1); ?>" class="form-group">
+		     	<div class="col-md-offset-4 col-md-4">
+                    <div class="pricing">
+                        <div class="title">
+                            <h2>Get Your Score</h2>
+                            <h1 id="score">--</h1>
+                            <span id="q_msg">-----</span>
+                        </div>
+                        <div class="x_content">
+                            <div class="">
+                                <div class="pricing_features">
+                                    <ul id="result_list" class="list-unstyled text-left">
+                                        <li><i class="fa fa-edit text-success"></i> 17/20 <strong>Andvance</strong> questions</li>
+                                        <li><i class="fa fa-edit text-success"></i> 35/40 <strong>Intermediate</strong> questions</li>
+                                        <li><i class="fa fa-edit text-success"></i> 40/40 <strong>Beginner</strong> questions</li>
+                                    </ul>
+	                                <p style="margin-top: 50px; ">
+	                                <strong>Note:</strong> <i>All questions must have answers before submitting.</i>
+	                                </p>
+                                </div>
 
+                            </div>
+                            <div class="pricing_footer">
+                                <a id="submit-answers" class="btn btn-success btn-block" role="button">
+                                 Submit</a>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>	
+		    </div>       
 	    </div>
     </form>    
     <!-- End SmartWizard Content -->

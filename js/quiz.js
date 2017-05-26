@@ -4,7 +4,8 @@ jQuery(document).ready(function ($) {
     // Smart Wizard 	
     $('#wizard').smartWizard({
     	enableAllSteps: false,
-    	enableFinishButton: true,
+    	enableFinishButton: false,
+        includeFinishButton: false,
     	onFinish: function(){
             
             // 
@@ -43,6 +44,10 @@ jQuery(document).ready(function ($) {
     	},
         onLeaveStep: function(me, step, context){
             
+            /*
+            *   
+            */
+
             // if (step.fromStep < step.toStep) {
             //     var cur_step = step.fromStep;
             //     console.log('current step', step.fromStep);
@@ -52,7 +57,40 @@ jQuery(document).ready(function ($) {
             //         return false;
             //     }    
             // }
+
+            /*
+            *   Scroll to top of quiz
+            */
+            $('html, body').animate({
+                scrollTop: $('#wizard').offset().top - 100
+            }, 'slow');
+
             
+            /*
+            *   Going to last step
+            */
+            console.log(this.steps.length + "=" + step.toStep);
+            if(this.steps.length == step.toStep){
+                // Get inputs
+                var q_data = get_your_answer();
+                if (q_data.error == true) {
+                    $('#step-'+ step.toStep + ' #submit-answers').attr("disabled", true);;
+
+                }else{
+                    $('#step-'+ step.toStep + ' #submit-answers').removeAttr('disabled');
+                }
+                $('#step-'+ step.toStep + ' span#q_msg').html(q_data.msg);
+
+                
+                var checklist = '';
+                checklist += '<li><i class="fa fa-edit text-success"></i> '+q_data.num_answered_questions+'/'+q_data.num_questions+' <strong>Answered</strong> questions.</li>';
+                checklist += '<li><i class="fa fa-close text-danger"></i> '+q_data.missed_questions.length+'/'+q_data.num_questions+' <strong>Unaswered</strong> questions.</li>';
+                
+                // Display question data
+                $('#step-'+ step.toStep + ' #result_list').html(checklist);
+
+            }
+
             return step.toStep;
         }
 
@@ -78,11 +116,18 @@ jQuery(document).ready(function ($) {
 function get_your_answer(){
 	var data = {};
 	var answer_data = [];
+    var missed_q = [];
 
+    var error = false;
+    var msg = "";
     // if number of questions are not equal to number of answer
     if ($('.q-row').length != $('li.selected').length ) {
-        alert("You've miss to answer some questions!");
-        return false;
+        // alert("You've miss to answer some questions!");
+        error = true;
+        msg = "You have missed to answer some questions!";
+    }else{
+        error = false;
+        msg = "rak n' rol!";
     }
 
 	$('.q-row').each(function(){
@@ -90,10 +135,19 @@ function get_your_answer(){
 		var ans = $(this).find('li.selected').html();
 		var qa = {id: qid, ans: ans};
 		answer_data.push(qa);
+
+        // if no answer then put it on unaswered collection
+        if(( ans == null ) ||( ans== "" )){
+            missed_q.push(qa);
+        }
 	});
 
 	data.num_questions = $('.q-row').length;
+    data.num_answered_questions = $('li.selected').length;
 	data.answer_data = answer_data;
-	// console.log(answer_data);
+    data.error = error;
+    data.msg = msg;
+    data.missed_questions = missed_q;
+
 	return data;
 }
