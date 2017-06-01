@@ -6,6 +6,8 @@ jQuery(document).ready(function ($) {
     	enableAllSteps: false,
     	enableFinishButton: false,
         includeFinishButton: false,
+        labelNext: 'Next >>',
+        labelPrevious: '<< Previous',
     	onFinish: function(){
             
             // 
@@ -112,6 +114,59 @@ jQuery(document).ready(function ($) {
 
 });
 
+$('#submit-answers').click(function(){
+    // 
+
+    if($(this).attr('disabled')){
+        return false;
+    }
+    
+    var answer_data = get_your_answer();
+    
+    if (answer_data == false) {
+        return false;
+    }       
+
+    var request_data = {
+
+        answer_data: answer_data,
+        action: "validate_answers",
+        security: Quiz.security
+    }
+    var spinner_content = '<div class="text-center quiz-notif"><i class="fa fa-spin fa-spinner"></i><br/>Evaluating Your Answer...</div>';
+    $('.pricing_features').html(spinner_content);
+
+    // console.log("submit");
+
+    // Sending ajax post request to server
+    $.post(Quiz.ajaxurl, request_data)
+    .done(function(response){
+
+        var json_resp = JSON.parse(response);
+        console.log(json_resp);
+        if (json_resp.error == false) {
+            
+            $('#score-header').html("Your Score");
+            $('#score').html(json_resp.score);
+            $('#q_msg').html("Congratulations!");
+
+            var response_list = '<ul id="result_list" class="list-unstyled text-left">';
+            response_list +='<li><i class="fa fa-edit text-success"></i> '+json_resp.score+'/'+answer_data.num_questions+' <strong>Correct</strong> answers.</li>';
+            response_list += '<li><i class="fa fa-close text-danger"></i> '+json_resp.mistakes.length+'/'+answer_data.num_questions+' <strong>Wrong</strong> answers.</li>';
+            response_list += '</ul>';
+
+            $('.pricing_features').html(response_list);
+            // var notif_content = '<div class="m-quiz-notif"><i class="fa fa-check-square-o" aria-hidden="true"></i><p>Your Score is: ' + json_resp.score + '</p></div>';
+            // $('.quiz-notif').html(notif_content);
+
+        }
+
+    })
+    .fail(function(response){
+        console.log(response);
+    });
+});
+
 
 function get_your_answer(){
 	var data = {};
@@ -127,7 +182,7 @@ function get_your_answer(){
         msg = "You have missed to answer some questions!";
     }else{
         error = false;
-        msg = "rak n' rol!";
+        msg = "Ready to get your score!";
     }
 
 	$('.q-row').each(function(){

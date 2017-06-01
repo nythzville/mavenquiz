@@ -12,9 +12,82 @@ add_action('admin_menu', 'Maven_Quiz_Plugin');
 
 function Maven_Quiz_Plugin() {
 	add_menu_page('Maven Quiz', 'Maven Quiz', 10, 'maven_quiz', 'maven_quiz', 'dashicons-welcome-write-blog');
+	add_submenu_page('maven_quiz', 'New Question', 'New Question', 1, 'new_question', 'new_question' );
+}
+
+// Show New Question Form
+function new_question(){
+	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
+	?>
+	<h1>New Question</h1>
+	<?php if(isset($saved_quiz)){ ?>
+	<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+	<?php } ?>
+	<form id="frm-saved-quiz" method="post">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="form-group">
+					    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required="" placeholder="Enter question here"></textarea>
+					  	</div>
+				
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+					    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required="" placeholder="Enter choice 1 here"></textarea>
+					  	</div>
+					</div>
+					<div class="col-md-6">
+
+					  	<div class="form-group">
+					    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required="" placeholder="Enter choice 2 here"></textarea>
+					  	</div>
+					</div>
+					<div class="col-md-6">
+					
+					  	<div class="form-group">
+					    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required="" placeholder="Enter choice 3 here"></textarea>
+					  	</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+					    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required="" placeholder="Enter choice 4 here"></textarea>
+					  	</div>
+					</div>
+				</div>
+				
+			</div>
+			<div class="col-md-4">
+			  	<div class="form-group">
+			    	<textarea name="answer" class="form-control" id="answer" required="" placeholder="Enter answer here"></textarea>
+			  	</div>
+			  	<div class="form-group">
+			    	<select name="level" class="form-control" id="level" required="" placeholder="Choose Level here">
+			    		<option value="Beginner">Beginner</option>
+			    		<option value="Intermediate">Intermediate</option>
+			    		<option value="Advance">Advance</option>
+
+			    	</select>
+			  	</div>
+			  	<?php wp_nonce_field( 'save_mave_quiz', 'save_mave_quiz' ); ?>
+			  	<div class="form-group">
+					<button type="submit" class="btn btn-success" >Save Question</button>
+				</div>
+
+			</div>
+		</div>
+		
+	  	
+	</form>
+	<?php
 }
 
 function maven_quiz(){
+
+	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
 
 	/*
 	* 	Call Global $wpdb
@@ -40,14 +113,6 @@ function maven_quiz(){
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql );
 
-	// $wpdb->query("INSERT INTO ".$wpdb->prefix . "quiz_questions
- //            (`id`, `question`, `choice_1`, `choice_2`, `choice_3`, `choice_4`, `answer`)
- //            VALUES
- //            (1, 'Tom <blank> English', 'are', 'am', 'is', 'be', 'is'),
- //            (2, '<blank> there a restaurant near hear?', 'Are', 'Have', 'Do', 'Is', 'Is'),
- //            (3, 'I didn't <blank> TV last night,  'not watched', 'watch', 'watching', 'watched', 'watched')");
-
-
 	/*
 	*	List table for listing Questions 
 	*/
@@ -57,94 +122,92 @@ function maven_quiz(){
 	}
 	require( ABSPATH . 'wp-content/plugins/maven-quiz/Question_List.php' );
 
+	$total_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions");
+	$total_beginner_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Beginner'");
+	$total_intermediate_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Intermediate'");
+	$total_advance_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions  WHERE level = 'Advance'");
+
+	$question_list_table =  new Question_List();
+	$question_list_table->prepare_items();
 	?>
-
 	<div class="wrap">
-		<?php if(isset($saved_quiz)){ ?>
-		<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-		<?php }elseif (isset($deleted_quiz)) { ?>
-			<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-		<?php } ?>
-		<h2 class="wp-heading-inline">Quiztion List</h2>
-		<!-- <a href="#" class="page-title-action">Add Question</a> -->
-		<button type="button" class="btn btn-info btn-lg page-title-action" data-toggle="modal" data-target="#newQuestion">New Question</button>	
-		<!-- <button id="btn-new-question" type="button" class="btn btn-info btn-lg page-title-action">New Question</button>	 -->
+		<div class="row">
+			<div class="col-md-12">
+			<?php if(isset($saved_quiz)){ ?>
+				<div id="message" class="updated notice notice-success is-dismissible"><p>Question Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+				<?php }elseif (isset($deleted_quiz)) { ?>
+					<div id="message" class="updated notice notice-success is-dismissible"><p>Question Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+				<?php } ?>
+				<h2 class="wp-heading-inline">Question List</h2>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-5">
+				<a href="<?php echo admin_url('/admin.php?page=new_question'); ?>" class="page-title-action">Add Question</a>
+				
+			</div>
+			<div class="col-md-3">
+				<form method="post">
+				  	<input type="hidden" name="page" value="my_list_test" />
+				  	<?php $question_list_table->search_box('search', 'search_id'); ?>
+				</form>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8">
+					<form id="question-list" method="post">
+					<?php
+					$question_list_table->display();
 
-			<form id="question-list" method="post">
-			<?php
-			
-			$customers =  new Question_List();
-			$customers->prepare_items();
-			$customers->display();
+					?>
+					<br class="clear">
+				</div>	
+				<div class="col-md-4">
+					
+				<div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-comments-o"></i>
+                        </div>
+                        <div class="count"><?php echo $total_q ?></div>
 
-			?>
-			<br class="clear">
+                        <h3>Total Questions</h3>
+                        <p>Number of all questions in all difficulty level</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-comments-o"></i>
+                        </div>
+                        <div class="count"><?php echo $total_beginner_q ?></div>
+
+                        <h3>Beginner Questions</h3>
+                        <p>Lowest level of difficulty</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-comments-o"></i>
+                        </div>
+                        <div class="count"><?php echo $total_intermediate_q ?></div>
+
+                        <h3>Intermediate Questions</h3>
+                        <p>Moderate level of difficulty</p>
+                    </div>
+                </div>
+                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="tile-stats">
+                        <div class="icon"><i class="fa fa-comments-o"></i>
+                        </div>
+                        <div class="count"><?php echo $total_advance_q ?></div>
+
+                        <h3>Advance Questions</h3>
+                        <p>Highest level of difficulty</p>
+                    </div>
+                </div>
+			</div>
 		</div>
 	</div>
-
-
-	<!-- Modal -->
-	<div id="newQuestion" class="modal fade" role="dialog">
-		<div class="modal-dialog">
-
-		    <!-- Modal content -->
-		    <div class="modal-content">
-		    		
-	      		<div class="modal-header">
-	        		<button type="button" class="close" data-dismiss="modal">&times;</button>
-	        		<h4 class="modal-title">New Question</h4>
-	      		</div>
-			    <form id="frm-saved-quiz" method="post">
-
-	      		<div class="modal-body">
-
-			        	<div class="form-group">
-					    	<label for="question">Question: </label>
-					    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required=""></textarea>
-					  	</div>
-					  	<div class="form-group">
-					    	<label for="choice_1">Choice 1: </label>
-					    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required=""></textarea>
-					  	</div>
-					  	<div class="form-group">
-					    	<label for="choice_2">Choice 2: </label>
-					    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required=""></textarea>
-					  	</div>
-					  	<div class="form-group">
-					    	<label for="choice_3">Choice 3: </label>
-					    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required=""></textarea>
-					  	</div>
-					  	<div class="form-group">
-					    	<label for="choice_4">Choice 4: </label>
-					    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required=""></textarea>
-					  	</div>
-					  	<div class="form-group">
-					    	<label for="answer">Answer: </label>
-					    	<textarea name="answer" class="form-control" id="answer" required=""></textarea>
-
-					  	</div>
-					  	<?php wp_nonce_field( 'save_mave_quiz', 'save_mave_quiz' ); ?>
-		  
-			    </div>
-
-		      	<div class="modal-footer">
-		        	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		        	<button type="button" class="btn btn-success" onclick="jQuery('#frm-saved-quiz').submit();">Save</button>
-
-      			</div>
-      			</form>
-      			<script type="text/javascript">
-      				jQuery(document).ready(function($){
-
-      				});
-      			</script>
-	    	</div>
-
-		</div>
-	</div>
-
 	<?php
-
 }
 
 /*
@@ -216,13 +279,13 @@ function validate_answers(){
 			foreach ($items as $q_item) {
 				
 				if($q_item->id == $correct_ans->id){
-					$answer = str_replace('\\', '', $q_item->answer);
+					$your_answer = str_replace('\\', '', $q_item->answer);
 
-					if ($answer === $correct_ans->answer) {
+					if ($your_answer === $correct_ans->answer) {
 						
 						$score++;
 					}else{
-						$q = (object) array('id' => $q_item->id, 'your-answer' => $answers, 'correct' => $correct_ans->answer);
+						$q = (object) array('id' => $q_item->id, 'your_answer' => $your_answer, 'correct' => $correct_ans->answer);
 						array_push($mistakes, $q);
 					}
 
@@ -266,7 +329,7 @@ function quiz_display($atts){
     ), $atts, 'bartag' );
 
 	/* Get all questions on database */
-	$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions ORDER BY RAND()";
+	$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions ORDER BY RAND() LIMIT 100";
 	$question_list = $wpdb->get_results( $sql, 'ARRAY_A' );
 	$rows = $question_list->num_rows;
 	
@@ -363,7 +426,7 @@ function quiz_display($atts){
 		     	<div class="col-md-offset-4 col-md-4">
                     <div class="pricing">
                         <div class="title">
-                            <h2>Get Your Score</h2>
+                            <h2 id="score-header">Get Your Score</h2>
                             <h1 id="score">--</h1>
                             <span id="q_msg">-----</span>
                         </div>
@@ -376,13 +439,21 @@ function quiz_display($atts){
                                         <li><i class="fa fa-edit text-success"></i> 40/40 <strong>Beginner</strong> questions</li>
                                     </ul>
 	                                <p style="margin-top: 50px; ">
-	                                <strong>Note:</strong> <i>All questions must have answers before submitting.</i>
+	                                <i>Fill up this form to get your score.</i>
+	                                	                                
 	                                </p>
+
+	                                <div class="form-group">
+                                		<input type="text" class="form-control" name="name" placeholder="Your Name">
+                                	</div>
+                                	<div class="form-group">
+                                		<input type="email" class="form-control" name="email" placeholder="Your Email">
+                                	</div>
                                 </div>
 
                             </div>
                             <div class="pricing_footer">
-                                <a id="submit-answers" class="btn btn-success btn-block" role="button">
+                                <a id="submit-answers" class="btn btn-block" role="button">
                                  Submit</a>
                                 
                             </div>

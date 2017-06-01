@@ -4,8 +4,8 @@ class Question_List extends WP_List_Table {
 	public function __construct() {
 
 		parent::__construct( [
-			'singular' => __( 'Menu', 'sp' ), //singular name of the listed records
-			'plural'   => __( 'Menus', 'sp' ), //plural name of the listed records
+			'singular' => __( 'Question', 'sp' ), //singular name of the listed records
+			'plural'   => __( 'Questions', 'sp' ), //plural name of the listed records
 			'ajax'     => false //should this table support ajax?
 
 		] );
@@ -14,8 +14,10 @@ class Question_List extends WP_List_Table {
 	function get_columns(){
 	  $columns = array(
 	  	'cb'        => '<input type="checkbox" />',
-	    'question'    		=> 'Questions',
-	    'answer'      		=> 'Answer'
+	    'question'    		=> __('Question', 'sp'),
+	    'answer'      		=> __('Answer','sp'),
+	    'level'      		=> __('Level','sp')
+
 
 	  );
 	  return $columns;
@@ -24,29 +26,18 @@ class Question_List extends WP_List_Table {
 	function prepare_items() {
 
 		// $items = $this->get_questions();
-		  $this->process_bulk_action();
-	  	$columns = $this->get_columns();
-	  	// $this->process_bulk_action();
-	 //  	$current_page = $this->get_pagenum();
-	 //  	$total_items  = count($items);
-	 //  	$per_page = 10;
-	 //  	$this->set_pagination_args( [
-		//     'total_items' => $total_items, //WE have to calculate the total number of items
-		//     'per_page'    => $per_page //WE have to determine how many items to show on a page
-		//   ] );
 	  
-	  $hidden = array();
-	  $sortable = $this->get_sortable_columns();
-	  $this->_column_headers = array($columns, $hidden, $sortable);
-	 //  $this->items = $items;
+	  	$hidden = array();
+	  	$columns = $this->get_columns();
 
-		$this->_column_headers = $this->get_column_info();
+	  	$sortable = $this->get_sortable_columns();
 
-		  /** Process bulk action */
+	  	$this->_column_headers = array($columns, $hidden, $sortable);
+		// ** Process bulk action */
 
-		  $per_page     = $this->get_items_per_page( 'customers_per_page', 5 );
-		  $current_page = $this->get_pagenum();
-		  $total_items  = self::record_count();
+		$per_page     = 10;
+		$current_page = $this->get_pagenum();
+		$total_items  = self::record_count();
 
 		  $this->set_pagination_args( [
 		    'total_items' => $total_items, //WE have to calculate the total number of items
@@ -57,10 +48,12 @@ class Question_List extends WP_List_Table {
 		  $this->items = self::get_questions( $per_page, $current_page );
 	}
 
+
 	function column_default( $item, $column_name ) {
 	  switch( $column_name ) { 
 	    case 'question':
 	    case 'answer':
+	    case 'level':
 
 	      return $item[ $column_name ];
 	    default:
@@ -78,6 +71,8 @@ class Question_List extends WP_List_Table {
 
 		$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions";
 
+		$sql .= isset($_POST['s'])? " WHERE question LIKE '%".$_POST['s']."%'": "";
+
 		if ( ! empty( $_REQUEST['orderby'] ) ) {
 		    $sql .= ' ORDER BY ' . esc_sql( $_REQUEST['orderby'] );
 		    $sql .= ! empty( $_REQUEST['order'] ) ? ' ' . esc_sql( $_REQUEST['order'] ) : ' ASC';
@@ -90,14 +85,22 @@ class Question_List extends WP_List_Table {
 
 		$result = $wpdb->get_results( $sql, 'ARRAY_A' );
 
+		for ($i=0; $i < count($result); $i++) { 
+			
+			$result[$i]["question"] = str_replace('<blank>', '<span class="blank"> __ </span>', $result[$i]["question"]);
+		}
+
 		return $result;
+
 	}
 
 	// Sorting
 	function get_sortable_columns() {
 	  $sortable_columns = array(
-	    'title' => array('title',false),
-	    'url'   => array('url',false)
+	    'question' => array('question',false),
+	    'answer'   => array('answer',false),
+	    'answer'   => array('answer',true)
+
 	  );
 	  return $sortable_columns;
 	}
@@ -107,17 +110,6 @@ class Question_List extends WP_List_Table {
 	    'delete'    => 'Delete'
 	  );
 	  return $actions;
-	}
-
-	function column_title($item) {
-	  $actions = array(
-	            'edit'      => sprintf('<a href="post.php?post=%s&action=%s">Edit</a>',$item['object_id'],'edit'),
-	            'delete'    => sprintf('<a href="post.php?post=%s&action=%s">Delete</a>',$item['object_id'],'delete'),
-	            'view'    	=> sprintf('<a href="%s">View</a>',$item['url']),
-
-	        );
-
-	  return sprintf('%1$s %2$s', $item['title'], $this->row_actions($actions) );
 	}
 
 	function column_cb($item) {
