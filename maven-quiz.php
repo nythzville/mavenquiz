@@ -11,8 +11,14 @@
 add_action('admin_menu', 'Maven_Quiz_Plugin');
 
 function Maven_Quiz_Plugin() {
+	
+	// Check / Craete Tables
+	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/db-tables.php');
+
 	add_menu_page('Maven Quiz', 'Maven Quiz', 10, 'maven_quiz', 'maven_quiz', 'dashicons-welcome-write-blog');
 	add_submenu_page('maven_quiz', 'New Question', 'New Question', 1, 'new_question', 'new_question' );
+	add_submenu_page('maven_quiz', 'Examinee List', 'Examinee List', 1, 'examinee_list', 'examinee_list' );
+
 }
 
 // Show New Question Form
@@ -84,34 +90,65 @@ function new_question(){
 	<?php
 }
 
-function maven_quiz(){
+function examinee_list(){
 
 	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
 	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
 
 	/*
-	* 	Call Global $wpdb
+	*	List table for listing Questions 
 	*/
+	if ( ! class_exists( 'WP_List_Table' ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 
-	global $wpdb;
-	$charset_collate = $wpdb->get_charset_collate();
-	$table_name = $wpdb->prefix . 'quiz_questions';
+	}
+	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/Examinee-list.php' );
+	$examinee_list_table =  new Examinee_List();
+	$examinee_list_table->prepare_items();
+	?>
+	<div class="wrap">
+		<div class="row">
+			<div class="col-md-12">
+			<?php if(isset($saved_quiz)){ ?>
+				<div id="message" class="updated notice notice-success is-dismissible"><p>Examinee Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+				<?php }elseif (isset($deleted_quiz)) { ?>
+					<div id="message" class="updated notice notice-success is-dismissible"><p>Examinee Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+				<?php } ?>
+				<h2 class="wp-heading-inline">Examinee List</h2>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-5">
+			
+			</div>
+			<div class="col-md-3">
+				<form method="post">
+				  	<input type="hidden" name="page" value="my_list_test" />
+				  	<?php $examinee_list_table->search_box('search', 'search_id'); ?>
+				</form>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8">
+				<form id="question-list" method="post">
+					<?php
+					$examinee_list_table->display();
 
-	$sql = "CREATE TABLE $table_name (
-		id mediumint(9) NOT NULL AUTO_INCREMENT,
-		question text  NOT NULL,
-		choice_1 text NOT NULL,
-		choice_2 text NOT NULL,
-		choice_3 text NOT NULL,
-		choice_4 text NOT NULL,
-		answer text NOT NULL,
-		level text NOT NULL,
+					?>
+				</form>
+				<br class="clear">
 
-		UNIQUE KEY id (id)
-	) $charset_collate;";
+			</div>
+		</div>
+	</div>
+<?php
+}	
 
-	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-	dbDelta( $sql );
+
+function maven_quiz(){
+
+	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
 
 	/*
 	*	List table for listing Questions 
@@ -122,6 +159,8 @@ function maven_quiz(){
 	}
 	require( ABSPATH . 'wp-content/plugins/maven-quiz/Question_List.php' );
 
+	global $wpdb;
+	
 	$total_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions");
 	$total_beginner_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Beginner'");
 	$total_intermediate_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Intermediate'");
@@ -155,58 +194,59 @@ function maven_quiz(){
 		</div>
 		<div class="row">
 			<div class="col-md-8">
-					<form id="question-list" method="post">
+				<form id="question-list" method="post">
 					<?php
 					$question_list_table->display();
 
 					?>
-					<br class="clear">
-				</div>	
-				<div class="col-md-4">
-					
-				<div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                    <div class="tile-stats">
-                        <div class="icon"><i class="fa fa-comments-o"></i>
-                        </div>
-                        <div class="count"><?php echo $total_q ?></div>
-
-                        <h3>Total Questions</h3>
-                        <p>Number of all questions in all difficulty level</p>
+				</form>
+				<br class="clear">
+			</div>	
+			<div class="col-md-4">
+				
+			<div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="tile-stats">
+                    <div class="icon"><i class="fa fa-comments-o"></i>
                     </div>
-                </div>
-                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                    <div class="tile-stats">
-                        <div class="icon"><i class="fa fa-comments-o"></i>
-                        </div>
-                        <div class="count"><?php echo $total_beginner_q ?></div>
+                    <div class="count"><?php echo $total_q ?></div>
 
-                        <h3>Beginner Questions</h3>
-                        <p>Lowest level of difficulty</p>
-                    </div>
+                    <h3>Total Questions</h3>
+                    <p>Number of all questions in all difficulty level</p>
                 </div>
-                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                    <div class="tile-stats">
-                        <div class="icon"><i class="fa fa-comments-o"></i>
-                        </div>
-                        <div class="count"><?php echo $total_intermediate_q ?></div>
+            </div>
+            <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="tile-stats">
+                    <div class="icon"><i class="fa fa-comments-o"></i>
+                    </div>
+                    <div class="count"><?php echo $total_beginner_q ?></div>
 
-                        <h3>Intermediate Questions</h3>
-                        <p>Moderate level of difficulty</p>
-                    </div>
+                    <h3>Beginner Questions</h3>
+                    <p>Lowest level of difficulty</p>
                 </div>
-                <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                    <div class="tile-stats">
-                        <div class="icon"><i class="fa fa-comments-o"></i>
-                        </div>
-                        <div class="count"><?php echo $total_advance_q ?></div>
+            </div>
+            <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="tile-stats">
+                    <div class="icon"><i class="fa fa-comments-o"></i>
+                    </div>
+                    <div class="count"><?php echo $total_intermediate_q ?></div>
 
-                        <h3>Advance Questions</h3>
-                        <p>Highest level of difficulty</p>
-                    </div>
+                    <h3>Intermediate Questions</h3>
+                    <p>Moderate level of difficulty</p>
                 </div>
-			</div>
+            </div>
+            <div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="tile-stats">
+                    <div class="icon"><i class="fa fa-comments-o"></i>
+                    </div>
+                    <div class="count"><?php echo $total_advance_q ?></div>
+
+                    <h3>Advance Questions</h3>
+                    <p>Highest level of difficulty</p>
+                </div>
+            </div>
 		</div>
 	</div>
+</div>
 	<?php
 }
 
