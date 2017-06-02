@@ -32,11 +32,25 @@ span.answer{
 .row{
 	margin-right: 0;
 }
+.actionBar{
+	margin-top:15px;
+}
 .actionBar .btn{
 	color: #EF8821;
 	border-color: #EF8821;
 	background-color: #fff;
+	max-width: 160px;
+    width: 100%;
+    margin-right: 2.5em;
 }
+.actionBar .btn:last-child{
+	margin-right: 0; 
+}
+
+.error-input{
+	border-color: red; 
+}
+
 .pricing_footer .btn{
 	color: #fff;
 	background-color: #EF8821;

@@ -9,56 +9,10 @@ jQuery(document).ready(function ($) {
         labelNext: 'Next >>',
         labelPrevious: '<< Previous',
     	onFinish: function(){
-            
-            // 
-    		var answer_data = get_your_answer();
-            
-            if (answer_data == false) {
-                return false;
-            }  		
-
-    		var request_data = {
-
-    			answer_data: answer_data,
-    			action: "validate_answers",
-    			security: Quiz.security
-    		}
-
-            bootbox.dialog({ closeButton: true, message: '<div class="text-center quiz-notif"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });           
-            console.log(answer_data);
-            // Sending ajax post request to server
-    		$.post(Quiz.ajaxurl, request_data)
-    		.done(function(response){
-
-                var json_resp = JSON.parse(response);
-    			console.log(json_resp);
-                if (json_resp.error == false) {
-                    
-                    var notif_content = '<div class="m-quiz-notif"><i class="fa fa-check-square-o" aria-hidden="true"></i><p>Your Score is: ' + json_resp.score + '</p></div>';
-                    $('.quiz-notif').html(notif_content);
-
-                }
-
-    		})
-    		.fail(function(response){
-    			console.log(response);
-    		});
+           
     	},
         onLeaveStep: function(me, step, context){
             
-            /*
-            *   
-            */
-
-            // if (step.fromStep < step.toStep) {
-            //     var cur_step = step.fromStep;
-            //     console.log('current step', step.fromStep);
-            //     var q_nums = $('#step-' + cur_step +' .q-row .choice_list').length;
-            //     var sel_nums = $('#step-' + cur_step +' .q-row .choice_list li.selected').length;
-            //     if( q_nums != sel_nums){
-            //         return false;
-            //     }    
-            // }
 
             /*
             *   Scroll to top of quiz
@@ -71,7 +25,6 @@ jQuery(document).ready(function ($) {
             /*
             *   Going to last step
             */
-            console.log(this.steps.length + "=" + step.toStep);
             if(this.steps.length == step.toStep){
                 // Get inputs
                 var q_data = get_your_answer();
@@ -115,28 +68,56 @@ jQuery(document).ready(function ($) {
 });
 
 $('#submit-answers').click(function(){
-    // 
-
+    /*
+    * if Button is disabled then no further actions
+    */
     if($(this).attr('disabled')){
         return false;
     }
-    
-    var answer_data = get_your_answer();
-    
-    if (answer_data == false) {
+    /*
+    * if Name field has no content then no further actions
+    */
+    if($("#your-name").val().length < 6){
+        $("#your-name").addClass('error-input');
+        return false;
+    }else{
+        $("#your-name").removeClass('error-input');
+
+    }
+    if(( $("#your-email").val().length == 0) ||(!IsEmail($("#your-email").val()))){
+        $("#your-email").addClass('error-input');
+        return false;
+    }else{
+        
+        $("#your-email").removeClass('error-input');
+
+    }
+    /*
+    *   Get the answer of the examinee
+    */
+    var answer_data = get_your_answer();    
+    if (answer_data == false) { // if no data then no further action
         return false;
     }       
+    
+    var username = $("#your-name").val();
+    var email = $("#your-email").val();
 
+    /*
+    *   Structure request data
+    */
     var request_data = {
-
+        examinee: {name: username, email: email},
         answer_data: answer_data,
         action: "validate_answers",
         security: Quiz.security
     }
+    
+    /*
+    *   Show loading spinner
+    */
     var spinner_content = '<div class="text-center quiz-notif"><i class="fa fa-spin fa-spinner"></i><br/>Evaluating Your Answer...</div>';
     $('.pricing_features').html(spinner_content);
-
-    // console.log("submit");
 
     // Sending ajax post request to server
     $.post(Quiz.ajaxurl, request_data)
@@ -147,18 +128,21 @@ $('#submit-answers').click(function(){
         if (json_resp.error == false) {
             
             $('#score-header').html("Your Score");
-            $('#score').html(json_resp.score);
-            $('#q_msg').html("Congratulations!");
+            $('#score').html(json_resp.scores.total_score);
+            $('#q_msg').html("You are on " + json_resp.level + " level!");
 
             var response_list = '<ul id="result_list" class="list-unstyled text-left">';
-            response_list +='<li><i class="fa fa-edit text-success"></i> '+json_resp.score+'/'+answer_data.num_questions+' <strong>Correct</strong> answers.</li>';
-            response_list += '<li><i class="fa fa-close text-danger"></i> '+json_resp.mistakes.length+'/'+answer_data.num_questions+' <strong>Wrong</strong> answers.</li>';
+            response_list +='<li><i class="fa fa-check text-success"></i> '+json_resp.scores.total_score+' / '+answer_data.num_questions+' <strong>Correct</strong> answers.</li>';
+            // response_list += '<li><i class="fa fa-close text-danger"></i> '+json_resp.mistakes.length+'/'+answer_data.num_questions+' <strong>Wrong</strong> answers.</li>';
+            response_list +='<li><i class="fa fa-check text-success"></i> '+json_resp.scores.beginner_score +' <strong>Correct</strong> Beginner Score.</li>';
+            response_list +='<li><i class="fa fa-check text-success"></i> '+json_resp.scores.intermediate_score +' <strong>Correct</strong> Intermediate Score.</li>';
+            response_list +='<li><i class="fa fa-check text-success"></i> '+json_resp.scores.advance_score +' <strong>Correct</strong> Advance Score.</li>';
+
+            
             response_list += '</ul>';
 
             $('.pricing_features').html(response_list);
-            // var notif_content = '<div class="m-quiz-notif"><i class="fa fa-check-square-o" aria-hidden="true"></i><p>Your Score is: ' + json_resp.score + '</p></div>';
-            // $('.quiz-notif').html(notif_content);
-
+            
         }
 
     })
@@ -176,7 +160,7 @@ function get_your_answer(){
     var error = false;
     var msg = "";
     // if number of questions are not equal to number of answer
-    if ($('.q-row').length != $('li.selected').length ) {
+    if ($('.q-row').length > $('li.selected').length ) {
         // alert("You've miss to answer some questions!");
         error = true;
         msg = "You have missed to answer some questions!";
@@ -198,11 +182,20 @@ function get_your_answer(){
 	});
 
 	data.num_questions = $('.q-row').length;
-    data.num_answered_questions = $('li.selected').length;
+    data.num_answered_questions = $('.q-row li.selected').length;
 	data.answer_data = answer_data;
     data.error = error;
     data.msg = msg;
     data.missed_questions = missed_q;
 
 	return data;
+}
+
+function IsEmail(email) {
+    var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    if(!regex.test(email)) {
+       return false;
+    }else{
+       return true;
+    }
 }

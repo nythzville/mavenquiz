@@ -15,51 +15,87 @@ function Maven_Quiz_Plugin() {
 	// Check / Craete Tables
 	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/db-tables.php');
 
+	if ( ! class_exists( 'WP_List_Table' ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
+
+	}
+	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/Question_List.php' );
+
+	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/Examinee_List.php' );
+
+
 	add_menu_page('Maven Quiz', 'Maven Quiz', 10, 'maven_quiz', 'maven_quiz', 'dashicons-welcome-write-blog');
-	add_submenu_page('maven_quiz', 'New Question', 'New Question', 1, 'new_question', 'new_question' );
-	add_submenu_page('maven_quiz', 'Examinee List', 'Examinee List', 1, 'examinee_list', 'examinee_list' );
+	add_submenu_page('maven_quiz', 'New Question', 'New Question', 10, 'questions', 'questions' );
+	add_submenu_page('maven_quiz', 'Examinee List', 'Examinee List', 10, 'examinee_list', 'examinee_list' );
 
 }
 
 // Show New Question Form
-function new_question(){
+function questions(){
+
+	global $wpdb;
 	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
-	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
+	wp_enqueue_style( 'bootstrap-css', plugins_url( '/maven-quiz/css/bootstrap.beautified.css' ));	
+		
+	$action = isset($_GET['action'])? $_GET['action'] : 'Add';
+
+	if($action == 'edit'){
+		if ( $_GET['question'] != "") {
+
+			$q_id = $_GET['question'];
+			$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions WHERE id = " .$q_id. "";
+			$question_arr = $wpdb->get_results( $sql );
+			
+			$question = $question_arr[0];
+
+		}
+	}
 	?>
 	<h1>New Question</h1>
 	<?php if(isset($saved_quiz)){ ?>
-	<div id="message" class="updated notice notice-success is-dismissible"><p>Quiz Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+	<div id="message" class="updated notice notice-success is-dismissible"><p>Question Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
+	<?php }elseif (isset($deleted_quiz)) { ?>
+		<div id="message" class="updated notice notice-success is-dismissible"><p>Question Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
 	<?php } ?>
+	<p>Put a  &ltblank&gt  tag to where you want to fill the answer.</p>
 	<form id="frm-saved-quiz" method="post">
 		<div class="row">
 			<div class="col-md-8">
 				<div class="row">
 					<div class="col-md-12">
+						<?php
+						if(isset($question->id)){
+						?>
+						<input type="hidden" name="id" value="<?php echo $question->id; ?>">
+						<input type="hidden" name="action" value="edit">
+						<?php	
+						}
+						?>
 						<div class="form-group">
-					    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required="" placeholder="Enter question here"></textarea>
+					    	<textarea name="question" class="form-control quiz_choice" rows="5" id="questnion" required="" placeholder="Enter question here"><?php echo $question->question? $question->question:'' ?></textarea>
 					  	</div>
 				
 					</div>
 					<div class="col-md-6">
 						<div class="form-group">
-					    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required="" placeholder="Enter choice 1 here"></textarea>
+					    	<textarea name="choice_1" class="form-control quiz_choice" id="choice_1" required="" placeholder="Enter choice 1 here"><?php echo $question->choice_1? $question->choice_1:'' ?></textarea>
 					  	</div>
 					</div>
 					<div class="col-md-6">
 
 					  	<div class="form-group">
-					    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required="" placeholder="Enter choice 2 here"></textarea>
+					    	<textarea name="choice_2" class="form-control quiz_choice" id="choice_2" required="" placeholder="Enter choice 2 here"><?php echo $question->choice_2? $question->choice_2:'' ?></textarea>
 					  	</div>
 					</div>
 					<div class="col-md-6">
 					
 					  	<div class="form-group">
-					    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required="" placeholder="Enter choice 3 here"></textarea>
+					    	<textarea name="choice_3" class="form-control quiz_choice" id="choice_3" required="" placeholder="Enter choice 3 here"><?php echo $question->choice_3? $question->choice_3:'' ?></textarea>
 					  	</div>
 					</div>
 					<div class="col-md-6">
 						<div class="form-group">
-					    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required="" placeholder="Enter choice 4 here"></textarea>
+					    	<textarea name="choice_4" class="form-control quiz_choice" id="choice_4" required="" placeholder="Enter choice 4 here"><?php echo $question->choice_4? $question->choice_4:'' ?></textarea>
 					  	</div>
 					</div>
 				</div>
@@ -67,13 +103,13 @@ function new_question(){
 			</div>
 			<div class="col-md-4">
 			  	<div class="form-group">
-			    	<textarea name="answer" class="form-control" id="answer" required="" placeholder="Enter answer here"></textarea>
+			    	<textarea name="answer" class="form-control" id="answer" required="" placeholder="Enter answer here"><?php echo $question->answer? $question->answer:'' ?></textarea>
 			  	</div>
 			  	<div class="form-group">
 			    	<select name="level" class="form-control" id="level" required="" placeholder="Choose Level here">
-			    		<option value="Beginner">Beginner</option>
-			    		<option value="Intermediate">Intermediate</option>
-			    		<option value="Advance">Advance</option>
+			    		<option value="Beginner" <?php echo ($question->level == 'Beginner')? 'selected': ''?>>Beginner</option>
+			    		<option value="Intermediate" <?php echo ($question->level == 'Intermediate')? 'selected': ''?>>Intermediate</option>
+			    		<option value="Advance" <?php echo ($question->level == 'Advance')? 'selected': ''?>>Advance</option>
 
 			    	</select>
 			  	</div>
@@ -92,28 +128,23 @@ function new_question(){
 
 function examinee_list(){
 
+	global $wpdb;
 	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
-	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
+	wp_enqueue_style( 'bootstrap-css', plugins_url( '/maven-quiz/css/bootstrap.beautified.css' ));	
+
 
 	/*
 	*	List table for listing Questions 
 	*/
-	if ( ! class_exists( 'WP_List_Table' ) ) {
-		require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
+	$today = Date("Y-m-d");
+	$today_examinee = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_examinees WHERE date_taken = '".$today."'");
 
-	}
-	require( ABSPATH . 'wp-content/plugins/maven-quiz/lib/Examinee-list.php' );
 	$examinee_list_table =  new Examinee_List();
 	$examinee_list_table->prepare_items();
 	?>
 	<div class="wrap">
 		<div class="row">
 			<div class="col-md-12">
-			<?php if(isset($saved_quiz)){ ?>
-				<div id="message" class="updated notice notice-success is-dismissible"><p>Examinee Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-				<?php }elseif (isset($deleted_quiz)) { ?>
-					<div id="message" class="updated notice notice-success is-dismissible"><p>Examinee Succesfully saved.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-				<?php } ?>
 				<h2 class="wp-heading-inline">Examinee List</h2>
 			</div>
 		</div>
@@ -139,6 +170,19 @@ function examinee_list(){
 				<br class="clear">
 
 			</div>
+			<div class="col-md-4">
+				
+				<div class="animated flipInY col-lg-12 col-md-12 col-sm-12 col-xs-12">
+	                <div class="tile-stats">
+	                    <div class="icon"><i class="fa fa-comments-o"></i>
+	                    </div>
+	                    <div class="count"><?php echo $today_examinee; ?></div>
+
+	                    <h3>Examinees Today </h3>
+	                    <p>Number of Examinees today</p>
+	                </div>
+                </div>
+            </div>
 		</div>
 	</div>
 <?php
@@ -148,19 +192,14 @@ function examinee_list(){
 function maven_quiz(){
 
 	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
-	wp_enqueue_style('bootstrap-min-css', get_template_directory_uri(). '/bootstrap/css/bootstrap.beautified.css');
+	wp_enqueue_style( 'bootstrap-css', plugins_url( '/maven-quiz/css/bootstrap.beautified.css' ));	
 
 	/*
 	*	List table for listing Questions 
 	*/
-	if ( ! class_exists( 'WP_List_Table' ) ) {
-		require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
-
-	}
-	require( ABSPATH . 'wp-content/plugins/maven-quiz/Question_List.php' );
-
-	global $wpdb;
 	
+	global $wpdb;
+
 	$total_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions");
 	$total_beginner_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Beginner'");
 	$total_intermediate_q = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}quiz_questions WHERE level = 'Intermediate'");
@@ -265,6 +304,8 @@ function save_quiz(){
 		$choice_3 = $_REQUEST['choice_3'];
 		$choice_4 = $_REQUEST['choice_4'];
 		$answer = $_REQUEST['answer'];
+		$level = $_REQUEST['level'];
+
 		
 		if( !empty($question) & !empty($choice_1) & !empty($choice_2) & !empty($choice_3) & !empty($choice_4) & !empty($answer)){
 			
@@ -273,10 +314,19 @@ function save_quiz(){
 								'choice_2' => $choice_2,
 								'choice_3' => $choice_3,
 								'choice_4' => $choice_4,
-								'answer' => $answer
+								'answer' => $answer,
+								'level'	=> $level
 								);
 
-			$wpdb->insert($wpdb->prefix . 'quiz_questions' , $raw_question);
+			if(isset($_REQUEST['action']) && ($_REQUEST['action'] == 'edit')){
+				if (isset($_REQUEST['id']) && ($_REQUEST['id'] != '')) {
+					
+					$id = $_REQUEST['id'];
+					$wpdb->update( $wpdb->prefix . 'quiz_questions', $raw_question , array( 'id' => $id ), array( '%s', '%d' ), array( '%d' ) );
+				}
+			}else{
+				$wpdb->insert($wpdb->prefix . 'quiz_questions' , $raw_question);			
+			}
 
 			$messages['saved_quiz'][2] = 'Quiz successfully saved!';
 		    return $messages;
@@ -298,10 +348,12 @@ function validate_answers(){
 		global $wpdb;
 
 		// Get the corrent answer in database
-		$sql = "SELECT id,answer FROM {$wpdb->prefix}quiz_questions";
+		$sql = "SELECT id,answer,level FROM {$wpdb->prefix}quiz_questions";
 		$answers_key = $wpdb->get_results($sql);
 
 		$ans_list = $_REQUEST['answer_data']['answer_data'];
+		$user = $_REQUEST['examinee'];
+
 		
 		$items = array();
 		foreach ($ans_list as $answer) {
@@ -313,6 +365,10 @@ function validate_answers(){
 
 		/** Compare given items to answer key and get score**/
 		$score = 0;
+		$b_score = 0;
+		$i_score = 0;
+		$a_score = 0;
+
 		$mistakes = array();
 		foreach ($answers_key as $correct_ans) {
 			
@@ -321,9 +377,16 @@ function validate_answers(){
 				if($q_item->id == $correct_ans->id){
 					$your_answer = str_replace('\\', '', $q_item->answer);
 
-					if ($your_answer === $correct_ans->answer) {
-						
+					if ($your_answer === $correct_ans->answer) {						
 						$score++;
+						if ($correct_ans->level == 'Beginner') {
+							$b_score++;
+						}elseif($correct_ans->level == 'Intermediate'){
+							$i_score++;
+						}elseif($correct_ans->level == 'Advance'){
+							$a_score++;
+						}
+
 					}else{
 						$q = (object) array('id' => $q_item->id, 'your_answer' => $your_answer, 'correct' => $correct_ans->answer);
 						array_push($mistakes, $q);
@@ -334,7 +397,54 @@ function validate_answers(){
 			}
 		}
 
-		echo json_encode(array('error'=> false, 'score' => $score, 'mistakes' => $mistakes));
+		// Checking Examinee level based on score
+		$level = 'Newbie';
+
+		if($score > (count($items) * ( 90 / 100) ) ){
+			$level = 'High Advance';
+		}elseif($score > (count($items) * ( 80 / 100) )){
+			$level = 'Mid Advance';
+
+		}elseif($score > (count($items) * ( 70 / 100) )){
+			$level = 'Low Advance';
+
+		}elseif($score > (count($items) * ( 60 / 100) )){
+			$level = 'High Intermediate';
+
+		}elseif($score > (count($items) * ( 50 / 100) )){
+			$level = 'Mid Intermediate';
+
+		}elseif($score > (count($items) * ( 40 / 100) )){
+			$level = 'Low Intermediate';
+
+		}elseif($score > (count($items) * ( 30 / 100) )){
+			$level = 'High Beginner';
+		}elseif ($score < (count($items) * ( 20 / 100) )) {
+			$level = 'Mid Beginner';
+		}elseif($score > (count($items) * ( 10 / 100) )){
+			$level = 'Low Beginner';
+		}
+
+		$new_examinee = array('name' => $user["name"],
+								'email' => $user["email"],
+								'score' => $score,
+								'level'	=> $level,
+								'date_taken' => Date("Y-m-d H:i:s")
+								);
+
+		$wpdb->insert($wpdb->prefix . 'quiz_examinees' , $new_examinee);
+
+		echo json_encode(array(	
+								'error'=> false,
+								'scores' => array(
+									'total_score' => $score,
+									'beginner_score' => $b_score,
+									'intermediate_score' => $i_score,
+									'advance_score' => $a_score,
+									),
+								'level' => $level,
+								'mistakes' => $mistakes)
+						);
 	}
 	exit();
 }
@@ -347,7 +457,8 @@ add_shortcode('show_quiz', 'quiz_display');
 function quiz_display($atts){
 
 	global $wpdb;
-	wp_enqueue_style( 'css-css', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style( 'quiz-style', plugins_url( '/maven-quiz/css/quiz-style.css' ));
+	wp_enqueue_style( 'bootstrap-css', plugins_url( '/maven-quiz/css/bootstrap.beautified.css' ));	
 	wp_enqueue_style( 'font-awesome-min-css', plugins_url( '/maven-quiz/font-awesome/css/font-awesome.min.css' ));
 
 	wp_enqueue_script( 'wizard-form', plugins_url( '/maven-quiz/js/wizard/jquery.smartWizard.js' ));
@@ -363,22 +474,28 @@ function quiz_display($atts){
 	// so that you can check it later when an AJAX request is sent
 	'security' => wp_create_nonce( 'secured-maven-quiz' )));
 
-	$atts = shortcode_atts( array(
-        'foo' => 'no foo',
-        'baz' => 'default baz'
-    ), $atts, 'bartag' );
+	
 
 	/* Get all questions on database */
-	$sql = "SELECT * FROM {$wpdb->prefix}quiz_questions ORDER BY RAND() LIMIT 100";
-	$question_list = $wpdb->get_results( $sql, 'ARRAY_A' );
-	$rows = $question_list->num_rows;
+	$sql_beginner_questions = "SELECT * FROM {$wpdb->prefix}quiz_questions WHERE `level` = 'Beginner' ORDER BY RAND() LIMIT 35";
+	$sql_intermediate_questions = "SELECT * FROM {$wpdb->prefix}quiz_questions WHERE `level` = 'Intermediate' ORDER BY RAND() LIMIT 35";
+	$sql_advance_questions = "SELECT * FROM {$wpdb->prefix}quiz_questions WHERE `level` = 'Advance' ORDER BY RAND() LIMIT 30";
 	
+	$beginner_question_list = $wpdb->get_results( $sql_beginner_questions, 'ARRAY_A' );
+	$intermediate_question_list = $wpdb->get_results( $sql_intermediate_questions, 'ARRAY_A' );
+	$advance_question_list = $wpdb->get_results( $sql_advance_questions, 'ARRAY_A' );
+
+	// $rows = ($beginner_question_list->num_rows + $intermediate_question_list->num_rows + $advance_question_list->num_rows);
+	
+	$question_list = array_merge_recursive($beginner_question_list, $intermediate_question_list,$advance_question_list);
+	
+	$row = $question_list->num_rows;
 	?>
 	<!-- Smart Wizard -->
 	<h1>Test Your skills in English</h1>
     <p>Test your English. This is a quick English test.
 	</p>
-    <form class="form-horizontal">
+    <form class="">
     	<!-- Wizard starts -->
     	<div id="wizard" class="form_wizard wizard_horizontal">
         	<ul class="wizard_steps">
@@ -484,10 +601,10 @@ function quiz_display($atts){
 	                                </p>
 
 	                                <div class="form-group">
-                                		<input type="text" class="form-control" name="name" placeholder="Your Name">
+                                		<input id="your-name" type="text" class="form-control" name="name" placeholder="Your Name">
                                 	</div>
                                 	<div class="form-group">
-                                		<input type="email" class="form-control" name="email" placeholder="Your Email">
+                                		<input id="your-email" type="email" class="form-control" name="email" placeholder="Your Email">
                                 	</div>
                                 </div>
 

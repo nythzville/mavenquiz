@@ -17,7 +17,7 @@ class Examinee_List extends WP_List_Table {
 	    'name'    		=> __('Name', 'sp'),
 	    'email'      		=> __('Email','sp'),
 	    'score'      		=> __('Score','sp'),
-	    'Level'      		=> __('Level','sp')
+	    'level'      		=> __('Level','sp')
 
 	  );
 	  return $columns;

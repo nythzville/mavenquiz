@@ -51,12 +51,13 @@ class Question_List extends WP_List_Table {
 
 	function column_default( $item, $column_name ) {
 	  switch( $column_name ) { 
+	    case 'question':
 	    case 'answer':
 	    case 'level':
-	    case 'question':
-		    return $item[ $column_name ];
+
+	      return $item[ $column_name ];
 	    default:
-	      	return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
+	      return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
 	  }
 	}
 
@@ -84,11 +85,6 @@ class Question_List extends WP_List_Table {
 
 		$result = $wpdb->get_results( $sql, 'ARRAY_A' );
 
-		for ($i=0; $i < count($result); $i++) { 
-			
-			$result[$i]["question"] = str_replace('<blank>', '<span class="blank"> __ </span>', $result[$i]["question"]);
-		}
-
 		return $result;
 
 	}
@@ -98,7 +94,7 @@ class Question_List extends WP_List_Table {
 	  $sortable_columns = array(
 	    'question' => array('question',false),
 	    'answer'   => array('answer',false),
-	    'answer'   => array('answer',true)
+	    'level'   => array('level',true)
 
 	  );
 	  return $sortable_columns;
@@ -116,19 +112,15 @@ class Question_List extends WP_List_Table {
             '<input type="checkbox" name="questions[]" value="%s" />', $item['id']
         );    
     }
-
-    function column_answer($item) {
-	  	// $actions = array(
-	   //      'edit' => sprintf('<a href="?page=maven_quiz&action=%s&book=%s">Edit</a>','edit',$item['id']),
-	   //      'delete'=> sprintf('<a href="?page=maven_quiz&action=%s&book=%s">Delete</a>','delete',$item['id']),
-	   //  );
-
-	  	// return sprintf('%1$s %2$s', $item['question'], $this->row_actions($actions) );
-	  	return sprintf(
-            '<input type="checkbox" name="questions[]" value="%s" />', $item['id']
-        ); 
-	}
 	
+	 function column_question($item) {
+	  	$actions = array(
+	        'edit' => sprintf('<a href="?page=questions&action=%s&question=%s">Edit</a>','edit',$item['id']),
+	    );
+
+	  	return sprintf('%1$s %2$s', str_replace('<blank>', '<span class="blank"> __ </span>',$item['question']), $this->row_actions($actions) );
+	  	
+	}
 
 	// Bulk Action
 	public function process_bulk_action() {
