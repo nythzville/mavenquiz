@@ -322,7 +322,7 @@ function save_quiz(){
 				if (isset($_REQUEST['id']) && ($_REQUEST['id'] != '')) {
 					
 					$id = $_REQUEST['id'];
-					$wpdb->update( $wpdb->prefix . 'quiz_questions', $raw_question , array( 'id' => $id ), array( '%s', '%d' ), array( '%d' ) );
+					$wpdb->update( $wpdb->prefix . 'quiz_questions', $raw_question , array( 'id' => $id ));
 				}
 			}else{
 				$wpdb->insert($wpdb->prefix . 'quiz_questions' , $raw_question);			
@@ -378,13 +378,16 @@ function validate_answers(){
 					$your_answer = str_replace('\\', '', $q_item->answer);
 
 					if ($your_answer === $correct_ans->answer) {						
-						$score++;
+						
 						if ($correct_ans->level == 'Beginner') {
 							$b_score++;
+							$score++;
 						}elseif($correct_ans->level == 'Intermediate'){
 							$i_score++;
+							$score = $score + 2;
 						}elseif($correct_ans->level == 'Advance'){
 							$a_score++;
+							$score = $score + 3;
 						}
 
 					}else{
@@ -400,28 +403,33 @@ function validate_answers(){
 		// Checking Examinee level based on score
 		$level = 'Newbie';
 
-		if($score > (count($items) * ( 90 / 100) ) ){
+		$score = (( $score / 195 ) * 100);
+
+		if($score >= 90){
 			$level = 'High Advance';
-		}elseif($score > (count($items) * ( 80 / 100) )){
+
+		}elseif($score >= 80 ){
 			$level = 'Mid Advance';
 
-		}elseif($score > (count($items) * ( 70 / 100) )){
+		}elseif($score >= 70 ){
 			$level = 'Low Advance';
 
-		}elseif($score > (count($items) * ( 60 / 100) )){
+		}elseif($score >= 60 ){
 			$level = 'High Intermediate';
 
-		}elseif($score > (count($items) * ( 50 / 100) )){
+		}elseif($score >= 50 ){
 			$level = 'Mid Intermediate';
 
-		}elseif($score > (count($items) * ( 40 / 100) )){
+		}elseif($score >= 40 ){
 			$level = 'Low Intermediate';
 
-		}elseif($score > (count($items) * ( 30 / 100) )){
+		}elseif($score >= 30 ){
 			$level = 'High Beginner';
-		}elseif ($score < (count($items) * ( 20 / 100) )) {
+
+		}elseif($score >= 20 ) {
 			$level = 'Mid Beginner';
-		}elseif($score > (count($items) * ( 10 / 100) )){
+
+		}elseif($score >= 10 ){
 			$level = 'Low Beginner';
 		}
 
